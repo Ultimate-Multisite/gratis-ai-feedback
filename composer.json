@@ -1,0 +1,29 @@
+{
+	"name": "ultimate-multisite/gratis-ai-feedback",
+	"description": "Feedback collection and issue triage service for Gratis AI Agent.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "Ultimate Multisite",
+			"homepage": "https://ultimatemultisite.com"
+		}
+	],
+	"require": {
+		"php": ">=8.2"
+	},
+	"autoload": {
+		"psr-4": {
+			"GratisAiFeedback\\": "includes/"
+		}
+	},
+	"config": {
+		"preferred-install": "dist",
+		"sort-packages": true
+	},
+	"homepage": "https://github.com/Ultimate-Multisite/gratis-ai-feedback",
+	"support": {
+		"issues": "https://github.com/Ultimate-Multisite/gratis-ai-feedback/issues",
+		"source": "https://github.com/Ultimate-Multisite/gratis-ai-feedback"
+	}
+}
