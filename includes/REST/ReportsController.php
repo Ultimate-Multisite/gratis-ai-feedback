@@ -5,14 +5,14 @@ declare(strict_types=1);
  * REST API controller for receiving feedback reports.
  *
  * Endpoints:
- *   POST /gratis-feedback/v1/reports   — Submit a new report (API key auth)
- *   GET  /gratis-feedback/v1/reports   — List reports (admin, manage_options)
- *   GET  /gratis-feedback/v1/reports/N — Get single report (admin)
- *   PATCH /gratis-feedback/v1/reports/N — Update report status (admin)
+ *   POST /gratis-ai-server/v1/reports   — Submit a new report (public, IP rate-limited)
+ *   GET  /gratis-ai-server/v1/reports   — List reports (admin, manage_options)
+ *   GET  /gratis-ai-server/v1/reports/N — Get single report (admin)
+ *   PATCH /gratis-ai-server/v1/reports/N — Update report status (admin)
  *
- * Authentication for the POST endpoint uses an API key passed in the
- * X-Feedback-Api-Key header. The key is hashed with SHA-256 and looked
- * up in the api_keys table.
+ * The POST endpoint is intentionally public — any site running the plugin
+ * can submit feedback without configuration. Abuse is prevented by IP-based
+ * rate limiting (default: 20 reports per hour per IP).
  *
  * @package GratisAiServer
  */
@@ -66,7 +66,7 @@ class ReportsController {
 	public static function register_routes(): void {
 		$instance = new self();
 
-		// Public: submit a report (API key auth).
+		// Public: submit a report (IP rate-limited, no auth required).
 		register_rest_route(
 			self::NAMESPACE,
 			'/reports',
@@ -74,7 +74,7 @@ class ReportsController {
 				[
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => [ $instance, 'create_report' ],
-					'permission_callback' => [ $instance, 'check_api_key_permission' ],
+					'permission_callback' => [ $instance, 'check_rate_limit' ],
 					'args'                => self::create_report_args(),
 				],
 				[
@@ -189,53 +189,70 @@ class ReportsController {
 	}
 
 	/**
-	 * Validate the API key from the request header.
+	 * Maximum reports per IP per hour.
+	 */
+	const RATE_LIMIT_PER_HOUR = 20;
+
+	/**
+	 * Rate-limit the public POST endpoint by client IP.
+	 *
+	 * No authentication required — any site running the plugin can submit
+	 * feedback. Abuse is prevented by counting recent reports from the
+	 * same IP address using a WordPress transient.
 	 *
 	 * @param WP_REST_Request $request The incoming request.
-	 * @return bool|WP_Error True if valid, WP_Error otherwise.
+	 * @return true|WP_Error
 	 */
-	public function check_api_key_permission( WP_REST_Request $request ) {
-		$raw_key = $request->get_header( 'X-Feedback-Api-Key' );
+	public function check_rate_limit( WP_REST_Request $request ) {
+		$ip  = self::get_client_ip();
+		$key = 'gratis_ai_server_rate_' . md5( $ip );
 
-		if ( empty( $raw_key ) ) {
-			return new WP_Error(
-				'gratis_ai_server_missing_key',
-				__( 'Missing X-Feedback-Api-Key header.', 'gratis-ai-server' ),
-				[ 'status' => 401 ]
-			);
-		}
+		$count = (int) get_transient( $key );
 
-		$key_hash = hash( 'sha256', $raw_key );
-		$key_row  = Database::get_api_key_by_hash( $key_hash );
-
-		if ( null === $key_row ) {
-			return new WP_Error(
-				'gratis_ai_server_invalid_key',
-				__( 'Invalid API key.', 'gratis-ai-server' ),
-				[ 'status' => 403 ]
-			);
-		}
-
-		// Rate limiting.
-		$recent_count = Database::count_recent_reports( (int) $key_row->id );
-		$limit        = (int) $key_row->rate_limit_per_hour;
-
-		if ( $recent_count >= $limit ) {
+		if ( $count >= self::RATE_LIMIT_PER_HOUR ) {
 			return new WP_Error(
 				'gratis_ai_server_rate_limited',
 				sprintf(
 					/* translators: %d: rate limit per hour */
 					__( 'Rate limit exceeded. Maximum %d reports per hour.', 'gratis-ai-server' ),
-					$limit
+					self::RATE_LIMIT_PER_HOUR
 				),
 				[ 'status' => 429 ]
 			);
 		}
 
-		// Store the validated key ID on the request for use in the callback.
-		$request->set_param( '_api_key_id', (int) $key_row->id );
-
 		return true;
+	}
+
+	/**
+	 * Increment the rate limit counter for the current IP.
+	 *
+	 * Called after a successful report insert.
+	 */
+	private static function increment_rate_limit(): void {
+		$ip  = self::get_client_ip();
+		$key = 'gratis_ai_server_rate_' . md5( $ip );
+
+		$count = (int) get_transient( $key );
+		set_transient( $key, $count + 1, HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * Get the client IP address, respecting proxy headers.
+	 */
+	private static function get_client_ip(): string {
+		// Cloudflare.
+		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+			return sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+		}
+
+		// Standard proxy header.
+		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			$ips = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			return trim( $ips[0] );
+		}
+
+		return sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0' ) );
 	}
 
 	/**
@@ -254,8 +271,6 @@ class ReportsController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_report( WP_REST_Request $request ) {
-		$api_key_id = (int) $request->get_param( '_api_key_id' );
-
 		// Build the report payload.
 		$session_data = $request->get_param( 'session_data' );
 		if ( ! is_array( $session_data ) ) {
@@ -276,7 +291,7 @@ class ReportsController {
 		// Build the raw report for sanitization.
 		$raw_report = [
 			'site_url'         => (string) $request->get_param( 'site_url' ),
-			'api_key_id'       => $api_key_id,
+			'api_key_id'       => 0,
 			'report_type'      => (string) $request->get_param( 'report_type' ),
 			'model_id'         => (string) $request->get_param( 'model_id' ),
 			'provider_id'      => (string) $request->get_param( 'provider_id' ),
@@ -308,8 +323,8 @@ class ReportsController {
 			);
 		}
 
-		// Update the API key's last_used_at.
-		Database::touch_api_key( $api_key_id );
+		// Increment IP rate limit counter.
+		self::increment_rate_limit();
 
 		/**
 		 * Fires after a feedback report is successfully created.
