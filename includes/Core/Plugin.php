@@ -43,6 +43,7 @@ class Plugin {
 		add_action( 'rest_api_init', [ \GratisAiServer\REST\ReportsController::class, 'register_routes' ] );
 		add_action( 'rest_api_init', [ \GratisAiServer\REST\ResaleApiController::class, 'register_routes' ] );
 
-		// Future service hooks register here.
+		// Register the report triage cron automation.
+		\GratisAiServer\Automations\ReportTriageAutomation::register();
 	}
 }

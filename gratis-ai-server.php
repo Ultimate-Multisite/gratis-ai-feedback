@@ -55,4 +55,8 @@ add_action( 'plugins_loaded', static function (): void {
 // Register WP-CLI commands.
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	\WP_CLI::add_command( 'gratis-ai-server api-key', GratisAiServer\CLI\ApiKeyCommand::class );
+	\WP_CLI::add_command( 'gratis-ai-server triage', GratisAiServer\CLI\TriageCommand::class );
 }
+
+// Clean up on deactivation.
+register_deactivation_hook( __FILE__, [ GratisAiServer\Automations\ReportTriageAutomation::class, 'unregister' ] );
