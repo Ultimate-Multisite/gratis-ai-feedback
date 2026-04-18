@@ -19,10 +19,10 @@ declare(strict_types=1);
  * - Cookie values
  * - Custom credential keys from tool call arguments
  *
- * @package GratisAiFeedback
+ * @package GratisAiServer
  */
 
-namespace GratisAiFeedback\Sanitization;
+namespace GratisAiServer\Sanitization;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

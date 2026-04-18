@@ -4,13 +4,13 @@ declare(strict_types=1);
 /**
  * Database schema management.
  *
- * Creates and upgrades the reports table. Uses WordPress dbDelta()
- * for safe incremental schema changes.
+ * Creates and upgrades all tables: feedback reports, API keys, resale clients,
+ * and resale usage logs. Uses WordPress dbDelta() for safe incremental schema changes.
  *
- * @package GratisAiFeedback
+ * @package GratisAiServer
  */
 
-namespace GratisAiFeedback\Core;
+namespace GratisAiServer\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -18,8 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Database {
 
-	const DB_VERSION_OPTION = 'gratis_ai_feedback_db_version';
-	const DB_VERSION        = '1.0.0';
+	const DB_VERSION_OPTION = 'gratis_ai_server_db_version';
+	const DB_VERSION        = '2.0.0';
 
 	/**
 	 * Get the reports table name.
@@ -27,7 +27,7 @@ class Database {
 	public static function reports_table(): string {
 		global $wpdb;
 		/** @var \wpdb $wpdb */
-		return $wpdb->prefix . 'gratis_ai_feedback_reports';
+		return $wpdb->prefix . 'gratis_ai_server_reports';
 	}
 
 	/**
@@ -36,7 +36,25 @@ class Database {
 	public static function api_keys_table(): string {
 		global $wpdb;
 		/** @var \wpdb $wpdb */
-		return $wpdb->prefix . 'gratis_ai_feedback_api_keys';
+		return $wpdb->prefix . 'gratis_ai_server_api_keys';
+	}
+
+	/**
+	 * Get the resale clients table name.
+	 */
+	public static function resale_clients_table(): string {
+		global $wpdb;
+		/** @var \wpdb $wpdb */
+		return $wpdb->prefix . 'gratis_ai_server_resale_clients';
+	}
+
+	/**
+	 * Get the resale usage log table name.
+	 */
+	public static function resale_usage_table(): string {
+		global $wpdb;
+		/** @var \wpdb $wpdb */
+		return $wpdb->prefix . 'gratis_ai_server_resale_usage';
 	}
 
 	/**
@@ -67,8 +85,10 @@ class Database {
 
 		$charset = $wpdb->get_charset_collate();
 
-		$reports_table  = self::reports_table();
-		$api_keys_table = self::api_keys_table();
+		$reports_table        = self::reports_table();
+		$api_keys_table       = self::api_keys_table();
+		$resale_clients_table = self::resale_clients_table();
+		$resale_usage_table   = self::resale_usage_table();
 
 		$sql = "CREATE TABLE {$reports_table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -104,6 +124,45 @@ class Database {
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_key_hash (key_hash),
 			KEY idx_is_active (is_active)
+		) {$charset};
+
+		CREATE TABLE {$resale_clients_table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			name varchar(255) NOT NULL,
+			description text NOT NULL DEFAULT '',
+			api_key varchar(64) NOT NULL,
+			monthly_token_quota bigint(20) unsigned NOT NULL DEFAULT 0,
+			tokens_used_this_month bigint(20) unsigned NOT NULL DEFAULT 0,
+			quota_reset_at datetime DEFAULT NULL,
+			allowed_models longtext NOT NULL DEFAULT '',
+			markup_percent decimal(5,2) NOT NULL DEFAULT 0.00,
+			enabled tinyint(1) NOT NULL DEFAULT 1,
+			request_count int(11) NOT NULL DEFAULT 0,
+			last_used_at datetime DEFAULT NULL,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY api_key (api_key),
+			KEY enabled (enabled)
+		) {$charset};
+
+		CREATE TABLE {$resale_usage_table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			client_id bigint(20) unsigned NOT NULL,
+			provider_id varchar(100) NOT NULL DEFAULT '',
+			model_id varchar(100) NOT NULL DEFAULT '',
+			prompt_tokens bigint(20) unsigned NOT NULL DEFAULT 0,
+			completion_tokens bigint(20) unsigned NOT NULL DEFAULT 0,
+			cost_usd decimal(10,6) NOT NULL DEFAULT 0,
+			status varchar(20) NOT NULL DEFAULT 'success',
+			error_message text NOT NULL DEFAULT '',
+			duration_ms bigint(20) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY client_id (client_id),
+			KEY created_at (created_at),
+			KEY model_id (model_id),
+			KEY status (status)
 		) {$charset};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';

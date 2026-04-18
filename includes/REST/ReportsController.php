@@ -14,13 +14,13 @@ declare(strict_types=1);
  * X-Feedback-Api-Key header. The key is hashed with SHA-256 and looked
  * up in the api_keys table.
  *
- * @package GratisAiFeedback
+ * @package GratisAiServer
  */
 
-namespace GratisAiFeedback\REST;
+namespace GratisAiServer\REST;
 
-use GratisAiFeedback\Core\Database;
-use GratisAiFeedback\Sanitization\ReportSanitizer;
+use GratisAiServer\Core\Database;
+use GratisAiServer\Sanitization\ReportSanitizer;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ReportsController {
 
-	const NAMESPACE = 'gratis-feedback/v1';
+	const NAMESPACE = 'gratis-ai-server/v1';
 
 	/**
 	 * Valid report types accepted by the endpoint.
@@ -199,8 +199,8 @@ class ReportsController {
 
 		if ( empty( $raw_key ) ) {
 			return new WP_Error(
-				'gratis_feedback_missing_key',
-				__( 'Missing X-Feedback-Api-Key header.', 'gratis-ai-feedback' ),
+				'gratis_ai_server_missing_key',
+				__( 'Missing X-Feedback-Api-Key header.', 'gratis-ai-server' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -210,8 +210,8 @@ class ReportsController {
 
 		if ( null === $key_row ) {
 			return new WP_Error(
-				'gratis_feedback_invalid_key',
-				__( 'Invalid API key.', 'gratis-ai-feedback' ),
+				'gratis_ai_server_invalid_key',
+				__( 'Invalid API key.', 'gratis-ai-server' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -222,10 +222,10 @@ class ReportsController {
 
 		if ( $recent_count >= $limit ) {
 			return new WP_Error(
-				'gratis_feedback_rate_limited',
+				'gratis_ai_server_rate_limited',
 				sprintf(
 					/* translators: %d: rate limit per hour */
-					__( 'Rate limit exceeded. Maximum %d reports per hour.', 'gratis-ai-feedback' ),
+					__( 'Rate limit exceeded. Maximum %d reports per hour.', 'gratis-ai-server' ),
 					$limit
 				),
 				[ 'status' => 429 ]
@@ -302,8 +302,8 @@ class ReportsController {
 
 		if ( false === $report_id ) {
 			return new WP_Error(
-				'gratis_feedback_insert_failed',
-				__( 'Failed to save report.', 'gratis-ai-feedback' ),
+				'gratis_ai_server_insert_failed',
+				__( 'Failed to save report.', 'gratis-ai-server' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -317,13 +317,13 @@ class ReportsController {
 		 * @param int                  $report_id The new report row ID.
 		 * @param array<string, mixed> $sanitized The sanitized report data.
 		 */
-		do_action( 'gratis_ai_feedback_report_created', $report_id, $sanitized );
+		do_action( 'gratis_ai_server_report_created', $report_id, $sanitized );
 
 		return new WP_REST_Response(
 			[
 				'id'      => $report_id,
 				'status'  => 'new',
-				'message' => __( 'Report received. Thank you for your feedback.', 'gratis-ai-feedback' ),
+				'message' => __( 'Report received. Thank you for your feedback.', 'gratis-ai-server' ),
 			],
 			201
 		);
@@ -407,8 +407,8 @@ class ReportsController {
 
 		if ( ! $row ) {
 			return new WP_Error(
-				'gratis_feedback_not_found',
-				__( 'Report not found.', 'gratis-ai-feedback' ),
+				'gratis_ai_server_not_found',
+				__( 'Report not found.', 'gratis-ai-server' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -444,8 +444,8 @@ class ReportsController {
 
 		if ( ! $exists ) {
 			return new WP_Error(
-				'gratis_feedback_not_found',
-				__( 'Report not found.', 'gratis-ai-feedback' ),
+				'gratis_ai_server_not_found',
+				__( 'Report not found.', 'gratis-ai-server' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -475,8 +475,8 @@ class ReportsController {
 
 		if ( empty( $updates ) ) {
 			return new WP_Error(
-				'gratis_feedback_no_updates',
-				__( 'No valid fields to update.', 'gratis-ai-feedback' ),
+				'gratis_ai_server_no_updates',
+				__( 'No valid fields to update.', 'gratis-ai-server' ),
 				[ 'status' => 400 ]
 			);
 		}

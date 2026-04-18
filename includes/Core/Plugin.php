@@ -8,10 +8,10 @@ declare(strict_types=1);
  * future services (license validation, usage analytics, remote config)
  * register here.
  *
- * @package GratisAiFeedback
+ * @package GratisAiServer
  */
 
-namespace GratisAiFeedback\Core;
+namespace GratisAiServer\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -40,7 +40,8 @@ class Plugin {
 		add_action( 'admin_init', [ Database::class, 'maybe_upgrade' ] );
 
 		// Register REST routes.
-		add_action( 'rest_api_init', [ \GratisAiFeedback\REST\ReportsController::class, 'register_routes' ] );
+		add_action( 'rest_api_init', [ \GratisAiServer\REST\ReportsController::class, 'register_routes' ] );
+		add_action( 'rest_api_init', [ \GratisAiServer\REST\ResaleApiController::class, 'register_routes' ] );
 
 		// Future service hooks register here.
 	}

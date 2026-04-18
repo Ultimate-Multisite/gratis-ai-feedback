@@ -18,3 +18,4 @@ Thumbs.db
 
 # AI DevOps local config
 .aidevops.json
+.agents/loop-state/

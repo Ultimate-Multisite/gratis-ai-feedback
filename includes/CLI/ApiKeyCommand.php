@@ -5,16 +5,16 @@ declare(strict_types=1);
  * WP-CLI commands for managing feedback API keys.
  *
  * Usage:
- *   wp gratis-feedback api-key generate --label="Production Site"
- *   wp gratis-feedback api-key list
- *   wp gratis-feedback api-key revoke <id>
+ *   wp gratis-ai-server api-key generate --label="Production Site"
+ *   wp gratis-ai-server api-key list
+ *   wp gratis-ai-server api-key revoke <id>
  *
- * @package GratisAiFeedback
+ * @package GratisAiServer
  */
 
-namespace GratisAiFeedback\CLI;
+namespace GratisAiServer\CLI;
 
-use GratisAiFeedback\Core\Database;
+use GratisAiServer\Core\Database;
 use WP_CLI;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -50,7 +50,7 @@ class ApiKeyCommand {
 		$rate_limit = (int) ( $assoc_args['rate-limit'] ?? 10 );
 
 		// Generate a cryptographically secure random key.
-		$raw_key  = 'gaf_' . bin2hex( random_bytes( 24 ) );
+		$raw_key  = 'gas_' . bin2hex( random_bytes( 24 ) );
 		$key_hash = hash( 'sha256', $raw_key );
 
 		global $wpdb;

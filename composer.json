@@ -1,6 +1,6 @@
 {
-	"name": "ultimate-multisite/gratis-ai-feedback",
-	"description": "Feedback collection and issue triage service for Gratis AI Agent.",
+	"name": "ultimate-multisite/gratis-ai-server",
+	"description": "Server-side services for Gratis AI Agent — feedback collection, issue triage, and resale API proxy.",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-or-later",
 	"authors": [
@@ -14,14 +14,14 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"GratisAiFeedback\\": "includes/"
+			"GratisAiServer\\": "includes/"
 		}
 	},
 	"config": {
 		"preferred-install": "dist",
 		"sort-packages": true
 	},
-	"homepage": "https://github.com/Ultimate-Multisite/gratis-ai-feedback",
+	"homepage": "https://ultimateagentwp.ai",
 	"support": {
 		"issues": "https://github.com/Ultimate-Multisite/gratis-ai-feedback/issues",
 		"source": "https://github.com/Ultimate-Multisite/gratis-ai-feedback"
