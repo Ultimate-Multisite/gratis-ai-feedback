@@ -246,20 +246,23 @@ PROMPT;
 
 		$prompt = sprintf( $prompt, (string) wp_json_encode( $report_summaries, JSON_PRETTY_PRINT ) );
 
-		$ai_result = wp_ai_client_prompt(
-			[
-				'prompt'             => $prompt,
-				'system_instruction' => 'You are a precise bug triage assistant. Respond only with valid JSON. No markdown fences, no explanation outside the JSON.',
-				'max_tokens'         => 2000,
-				'temperature'        => 0.2,
-			]
-		);
+		$builder = wp_ai_client_prompt( $prompt );
+		$result  = $builder->generate_text_result();
 
-		if ( is_wp_error( $ai_result ) ) {
+		if ( is_wp_error( $result ) ) {
 			return null;
 		}
 
-		$text = is_string( $ai_result ) ? $ai_result : ( $ai_result['text'] ?? '' );
+		$text = '';
+		if ( $result instanceof \WordPress\AiClient\Results\DTO\GenerativeAiResult ) {
+			$text = $result->toText();
+		} elseif ( is_string( $result ) ) {
+			$text = $result;
+		}
+
+		if ( '' === $text ) {
+			return null;
+		}
 
 		// Strip markdown fences if present.
 		$text = preg_replace( '/^```(?:json)?\s*/m', '', $text );

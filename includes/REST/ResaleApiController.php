@@ -352,7 +352,14 @@ class ResaleApiController {
 		}
 
 		$start_ms = (int) round( microtime( true ) * 1000 );
-		$result   = wp_ai_client_prompt( $prompt_args );
+
+		$builder = wp_ai_client_prompt( $user_message );
+
+		if ( '' !== $requested_model ) {
+			$builder = $builder->using_model_preference( $requested_model );
+		}
+
+		$result   = $builder->generate_text_result();
 		$duration = (int) round( microtime( true ) * 1000 ) - $start_ms;
 
 		// Handle errors.
@@ -371,11 +378,20 @@ class ResaleApiController {
 			return new WP_Error( 'resale_api_upstream_error', $result->get_error_message(), [ 'status' => 502 ] );
 		}
 
-		// Extract response data.
-		$reply             = is_string( $result ) ? $result : ( $result['text'] ?? '' );
-		$prompt_tokens     = (int) ( $result['usage']['prompt_tokens'] ?? 0 );
-		$completion_tokens = (int) ( $result['usage']['completion_tokens'] ?? 0 );
-		$model_used        = (string) ( $result['model'] ?? $requested_model );
+		// Extract response data from WP 7.0 GenerativeAiResult.
+		$reply             = '';
+		$prompt_tokens     = 0;
+		$completion_tokens = 0;
+		$model_used        = $requested_model;
+
+		if ( $result instanceof \WordPress\AiClient\Results\DTO\GenerativeAiResult ) {
+			$reply             = $result->toText();
+			$usage             = $result->getTokenUsage();
+			$prompt_tokens     = $usage->getPromptTokens();
+			$completion_tokens = $usage->getCompletionTokens();
+		} elseif ( is_string( $result ) ) {
+			$reply = $result;
+		}
 
 		// Simple cost estimation (can be refined later with a dedicated cost calculator).
 		$cost = 0.0;
