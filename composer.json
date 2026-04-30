@@ -1,29 +1,36 @@
 {
-	"name": "ultimate-multisite/gratis-ai-server",
-	"description": "Server-side services for Gratis AI Agent — feedback collection, issue triage, and resale API proxy.",
-	"type": "wordpress-plugin",
-	"license": "GPL-2.0-or-later",
-	"authors": [
-		{
-			"name": "Ultimate Multisite",
-			"homepage": "https://ultimatemultisite.com"
-		}
-	],
-	"require": {
-		"php": ">=8.2"
-	},
-	"autoload": {
-		"psr-4": {
-			"GratisAiServer\\": "includes/"
-		}
-	},
-	"config": {
-		"preferred-install": "dist",
-		"sort-packages": true
-	},
-	"homepage": "https://ultimateagentwp.ai",
-	"support": {
-		"issues": "https://github.com/Ultimate-Multisite/gratis-ai-feedback/issues",
-		"source": "https://github.com/Ultimate-Multisite/gratis-ai-feedback"
-	}
+    "name": "ultimate-multisite/gratis-ai-server",
+    "description": "Server-side services for Gratis AI Agent \u2014 feedback collection, issue triage, and resale API proxy.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Ultimate Multisite",
+            "homepage": "https://ultimatemultisite.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "GratisAiServer\\": "includes/"
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    },
+    "homepage": "https://ultimateagentwp.ai",
+    "support": {
+        "issues": "https://github.com/Ultimate-Multisite/gratis-ai-feedback/issues",
+        "source": "https://github.com/Ultimate-Multisite/gratis-ai-feedback"
+    },
+    "require-dev": {
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "phpstan/extension-installer": "^1.1"
+    }
 }
