@@ -5,6 +5,7 @@
  * Description:       Server-side services for Gratis AI Agent — feedback collection, issue triage, and resale API proxy. Receives anonymized conversation reports, manages resale API clients with quotas, and supports AI-assisted triage to GitHub issues.
  * Version:           1.0.0
  * Requires at least: 7.0
+ * Tested up to:     7.1
  * Requires PHP:      8.2
  * Author:            Ultimate Multisite
  * Author URI:        https://ultimatemultisite.com
