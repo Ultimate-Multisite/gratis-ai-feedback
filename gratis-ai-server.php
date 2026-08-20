@@ -3,7 +3,7 @@
  * Plugin Name:       Gratis AI Server
  * Plugin URI:        https://ultimateagentwp.ai
  * Description:       Server-side services for Gratis AI Agent — feedback collection, issue triage, and resale API proxy. Receives anonymized conversation reports, manages resale API clients with quotas, and supports AI-assisted triage to GitHub issues.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 7.0
  * Requires PHP:      8.2
  * Author:            Ultimate Multisite
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GRATIS_AI_SERVER_VERSION', '1.0.0' );
+define( 'GRATIS_AI_SERVER_VERSION', '1.0.1' );
 define( 'GRATIS_AI_SERVER_FILE', __FILE__ );
 define( 'GRATIS_AI_SERVER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GRATIS_AI_SERVER_URL', plugin_dir_url( __FILE__ ) );
